@@ -1,0 +1,47 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile and settings",
+      "type": "object",
+      "properties": {
+        "username": { "type": "string" },
+        "language": { "type": "string", "enum": ["si", "en"] },
+        "installDate": { "type": "string", "format": "date-time" },
+        "isSubscribed": { "type": "boolean" }
+      },
+      "required": ["username", "installDate"]
+    },
+    "Reminder": {
+      "title": "Reminder",
+      "description": "A reminder or event",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "time": { "type": "string" },
+        "type": { "type": "string", "enum": ["payment", "birthday", "appointment", "task", "special"] },
+        "repeat": { "type": "string", "enum": ["none", "daily", "weekly", "monthly", "yearly"] },
+        "remind_before": { "type": "integer" },
+        "priority": { "type": "string", "enum": ["low", "normal", "high"] },
+        "share_to": { "type": "string" },
+        "is_special": { "type": "boolean" },
+        "is_pinned": { "type": "boolean" },
+        "voice_data": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "title", "date", "type", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles"
+    },
+    "/reminders/{reminderId}": {
+      "schema": "Reminder",
+      "description": "Reminders collection"
+    }
+  }
+}

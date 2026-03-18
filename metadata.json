@@ -1,0 +1,7 @@
+{
+  "name": "Vaastu.lk Voice Reminder",
+  "description": "A voice-controlled reminder app for Sri Lankans, supporting Sinhala and English commands for payments, birthdays, and special events.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}

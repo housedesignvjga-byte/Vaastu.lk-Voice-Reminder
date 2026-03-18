@@ -1,0 +1,81 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Document ID: {userId}
+    // Fields:
+    //   - username: string (required)
+    //   - language: string (optional)
+    //   - installDate: string (required)
+    //   - isSubscribed: boolean (optional)
+    //
+    // Collection: reminders
+    // Document ID: auto-generated
+    // Fields:
+    //   - userId: string (required) - UID of the owner
+    //   - title: string (required, max 200 chars)
+    //   - date: string (required, YYYY-MM-DD)
+    //   - time: string (optional, HH:mm)
+    //   - type: string (required, enum)
+    //   - repeat: string (required, enum)
+    //   - remind_before: int (required)
+    //   - priority: string (required, enum)
+    //   - share_to: string (optional)
+    //   - is_special: bool (required)
+    //   - is_pinned: bool (required)
+    //   - voice_data: string (optional, base64)
+    //   - createdAt: timestamp (required)
+    //
+    // ===============================================================
+
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isDocOwner() {
+      return isAuthenticated() && request.auth.uid == resource.data.userId;
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['username', 'installDate']) &&
+             data.username is string && data.username.size() > 0 && data.username.size() < 50 &&
+             data.installDate is string;
+    }
+
+    function isValidReminder(data) {
+      return data.keys().hasAll(['userId', 'title', 'date', 'type', 'repeat', 'remind_before', 'priority', 'is_special', 'is_pinned', 'createdAt']) &&
+             data.userId == request.auth.uid &&
+             data.title is string && data.title.size() > 0 && data.title.size() < 200 &&
+             data.date is string &&
+             data.type in ['payment', 'birthday', 'appointment', 'task', 'special'] &&
+             data.repeat in ['none', 'daily', 'weekly', 'monthly', 'yearly'] &&
+             data.remind_before is int &&
+             data.priority in ['low', 'normal', 'high'] &&
+             data.is_special is bool &&
+             data.is_pinned is bool &&
+             data.createdAt is timestamp;
+    }
+
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidUser(request.resource.data);
+      allow update: if isOwner(userId) && isValidUser(request.resource.data);
+    }
+
+    match /reminders/{reminderId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated() && isValidReminder(request.resource.data);
+      allow update: if isDocOwner() && isValidReminder(request.resource.data);
+      allow delete: if isDocOwner();
+    }
+  }
+}
